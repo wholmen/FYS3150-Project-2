@@ -14,9 +14,9 @@ void Analytical(mat A, int N);
 int main()
 {
     // Implementing Jacobis method to solve an Schrodinger's equation
-    int N = 1000;
+    int N = 10000;
     double planck = 6.62606957e-34; // m2 kg / s
-    double pmax = 1000;
+    double pmax = 10000;
     double h = pmax / N;
     double V;
 
@@ -30,7 +30,6 @@ int main()
         V = pow(i*h,2);
         A(i,i) = 2 + V;
     }
-
     A = Jacobi(A,N);
     cout << A(1,1) << endl << A(2,2) << endl << A(3,3) << endl;
 
@@ -64,47 +63,74 @@ mat Jacobi(mat A, int N){
     // an eigenvalue problem by Jacobi's method.
     double maximum = 1;
     double tolerance = 1e-4;
-    int n = 0; int maxn = 1e3;
+    int n = 0; int maxn = 2e5;
 
 
     while (maximum > tolerance && n < maxn){
 
         // A loop to find the highest off-diagonal element and its indices.
-        int i; int j; maximum = 0.0; int I; int J;
+        int i; int j; maximum = 0.0; int l; int k;
         for (i=0; i<N; i++){
             for(j=0; j<N; j++){
                 if (i != j){
-                    if (abs(A(i,j)) > maximum){
-                        maximum = abs(A(i,j)); I = i; J = j;
+                    if (fabs(A(i,j)) > maximum){
+                        maximum = fabs(A(i,j)); l = i; k = j;
                     }
                 }
             }
         } // Loop ended. Maximum element is located at (I,J)
 
         // Computing tau, tangens, cosine and sine for the transformation
-        double tau; double t1; double t2; double t; double c; double s;
-        tau = (A(J,J)-A(I,I)) / (2*A(J,I));
+        double s,c;
+        if (A(k,l) != 0){
+            double tau; double t1; double t2; double t;
+            tau = (A(l,l)-A(k,k)) / (2*A(k,l));
 
-        // Computing tangens, and choosing the lowest of the possible roots.
-        t1 = -tau + sqrt(1+pow(tau,2)); t2 = -tau - sqrt(1+pow(tau,2));
-        if (abs(t1) < abs(t2)){
-            t = t1;
+            // Computing tangens, and choosing the lowest of the possible roots.
+            t1 = -tau + sqrt(1.0+tau*tau); t2 = -tau - sqrt(1.0+tau*tau);
+            if (fabs(t1) < fabs(t2)){
+                t = t1;
+            } else{
+                t = t2;
+            }
+
+            // Computing cosine and sine
+            c = 1/(sqrt(1+t*t));
+            s = t*c;
+        } else {
+            c = 1.0; s = 0.0;
         }
-        else{
-            t = t2;
+
+        // Computing the new matrix elements.
+        double a_kk, a_ll, a_ik, a_il;
+        a_kk = A(k,k); a_ll = A(l,l);
+
+        // Changing the four elements with indices l and k.
+        A(k,k) = c*c*a_kk - 2.0*A(k,l)*c*s + s*s*a_ll;
+        A(l,l) = s*s*a_kk + 2.0*A(k,l)*c*s + c*c*a_ll;
+        A(k,l) = 0.0; A(l,k) = 0;
+
+        // Looping over the rest of the matrix, and rotating the whole matrix.
+        for (i=0; i<n; i++){
+            if (i != k && i != l){
+                a_ik = A(i,k);
+                a_il = A(i,l);
+                A(i,k) = c*a_ik - s*a_il;
+                A(k,i) = A(i,k);
+                A(i,l) = c*a_il + s*a_ik;
+                A(l,i) = A(l,i);
+            }
         }
 
-        // Computing cosine and sine
-        c = 1/(sqrt(1+pow(t,2)));
-        s = t*c;
-
+        /*
         // Now computing the similarity matrix S and its transpose.
         mat S = eye<mat>(N,N); mat St = eye<mat>(N,N);
-        S(J,J) = c; S(I,I) = c; S(J,I) = -s; S(I,J) = s;
-        St(J,J) = c; St(I,I) = c; St(J,I) = s; St(I,J) = -s;
+        S(l,l) = c; S(k,k) = c; S(l,k) = -s; S(k,l) = s;
+        St(l,l) = c; St(k,k) = c; St(l,k) = s; St(k,l) = -s;
 
         A = St*A*S;
-        n++;
+        */
+        n++; // Updating n in the while-loop.
 
     } // Ending the while-loop
     if (n == maxn){
