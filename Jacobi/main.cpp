@@ -10,53 +10,63 @@ using namespace arma;
 
 mat Jacobi(mat A, int N);
 void Analytical(mat A, int N);
+void tqli(double *, double *, int, double **);
 
 int main()
 {
+    // ----------------------------------------------------------------------
     // Implementing Jacobis method to solve an Schrodinger's equation
-    int N = 10000;
-    double planck = 6.62606957e-34; // m2 kg / s
-    double pmax = 10000;
+    // ----------------------------------------------------------------------
+    int N = 1000;
+    //double planck = 6.62606957e-34; // m2 kg / s
+    double pmax = N;
     double h = pmax / N;
     double V;
 
-
     // Defining matrix A to be LHS of schrodinger equation. 
-
     mat A = zeros<mat>(N,N);
-    A.diag(1) += -1; A.diag(-1) += -1;
-
+    A.diag(1) += -1/h/h; A.diag(-1) += -1/h/h;
     for (int i=0;i<N;i++){
-        V = pow(i*h,2);
-        A(i,i) = 2 + V;
+        V = (i+1)*(i+1)*h*h;
+        A(i,i) = 2/h/h + V;
     }
+
+    // Rotating matrix A to make it a diagonal matrix with eigenvalues along the diagonal
     A = Jacobi(A,N);
-    cout << A(1,1) << endl << A(2,2) << endl << A(3,3) << endl;
 
+    // Writing out the first eigenvalues.
+    cout << A(0,0) << endl << A(1,1) << endl << A(2,2) << endl << A(3,3) << endl;
+
+    // ----------------------------------------------------------------
     // Implementing the Solver from lib.cpp
-    /*
-    double d[N]; double e[N]; double *dd; double *ee;
+    // ----------------------------------------------------------------
+
+    // LHS of Schrodinger eq. d is the diagonal of A and e is the off-diagonal.
+    double d[N]; double e[N];
     for (int i=0;i<N;i++){
-        d[i] = 2; e[i] = -1;
+        V = i*i*h*h;
+        d[i] = 2/h/h+V; e[i] = -1/h/h;
     }
 
-    dd = &d[0]; ee = &e[0];
-
+    // Defining the eigenvector matrix.
+    double z[N][N];
+    for (int i=0;i<N;i++){
+        z[i][i] = 1;
+    }
     double **zz;
     zz = new double*[N];
     for(int i=0;i<N;i++){
-        zz[i] = new double[N];
+        zz[i] = &z[i][0];
     }
 
-    tqli(dd,ee,N,zz);
-    */
+    tqli(&d[0],&e[0],N,zz);
+    cout << d[0] << endl << d[1] << endl << d[2];
 
+    // -------------------------------------------------------------------
+    // End of main.cpp
+    // -------------------------------------------------------------------
     return 0;
 }
-
-
-
-
 
 mat Jacobi(mat A, int N){
     // Here the Jacobi method will be implemented. A call to this function will solve
@@ -71,11 +81,9 @@ mat Jacobi(mat A, int N){
         // A loop to find the highest off-diagonal element and its indices.
         int i; int j; maximum = 0.0; int l; int k;
         for (i=0; i<N; i++){
-            for(j=0; j<N; j++){
-                if (i != j){
-                    if (fabs(A(i,j)) > maximum){
+            for(j=i+1; j<N; j++){
+                if (fabs(A(i,j)) > maximum){
                         maximum = fabs(A(i,j)); l = i; k = j;
-                    }
                 }
             }
         } // Loop ended. Maximum element is located at (I,J)
@@ -83,19 +91,18 @@ mat Jacobi(mat A, int N){
         // Computing tau, tangens, cosine and sine for the transformation
         double s,c;
         if (A(k,l) != 0){
-            double tau; double t1; double t2; double t;
+            double tau; double t;
             tau = (A(l,l)-A(k,k)) / (2*A(k,l));
 
             // Computing tangens, and choosing the lowest of the possible roots.
-            t1 = -tau + sqrt(1.0+tau*tau); t2 = -tau - sqrt(1.0+tau*tau);
-            if (fabs(t1) < fabs(t2)){
-                t = t1;
-            } else{
-                t = t2;
+            if (tau > 0){
+                t = -tau + sqrt(1.0+tau*tau);
+            } else {
+                t = -tau - sqrt(1.0+tau*tau);
             }
 
             // Computing cosine and sine
-            c = 1/(sqrt(1+t*t));
+            c = 1.0/sqrt(1+t*t);
             s = t*c;
         } else {
             c = 1.0; s = 0.0;
@@ -118,31 +125,22 @@ mat Jacobi(mat A, int N){
                 A(i,k) = c*a_ik - s*a_il;
                 A(k,i) = A(i,k);
                 A(i,l) = c*a_il + s*a_ik;
-                A(l,i) = A(l,i);
+                A(l,i) = A(i,l);
             }
         }
 
-        /*
-        // Now computing the similarity matrix S and its transpose.
-        mat S = eye<mat>(N,N); mat St = eye<mat>(N,N);
-        S(l,l) = c; S(k,k) = c; S(l,k) = -s; S(k,l) = s;
-        St(l,l) = c; St(k,k) = c; St(l,k) = s; St(k,l) = -s;
-
-        A = St*A*S;
-        */
         n++; // Updating n in the while-loop.
 
     } // Ending the while-loop
     if (n == maxn){
         cout << "Jacobi did not converge fast enough. While-loop interrupted by too large n" << endl;
     }
-    cout << maximum << endl;
     return A;
-
-
 } // End of Jacobi function
 
+/*
 void Analytical(mat A, int N){
     // This is a function made to compute a closed form solution of the same physical problem.
 
 }
+*/
