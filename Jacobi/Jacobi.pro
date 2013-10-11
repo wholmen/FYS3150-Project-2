@@ -4,8 +4,10 @@ CONFIG -= app_bundle
 CONFIG -= qt
 LIBS += -larmadillo -lblas -llapack
 SOURCES += main.cpp \
-    lib.cpp
+    lib.cpp \
+    Jacobi_function.cpp
 
 HEADERS += \
-    lib.h
+    lib.h \
+    Jacobi_function.h
 
