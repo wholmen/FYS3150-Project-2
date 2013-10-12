@@ -10,4 +10,4 @@
 using namespace std;
 using namespace arma;
 
-mat Jacobi(mat A, int N);
+mat Jacobi(mat A, int N, int *n);

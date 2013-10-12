@@ -1,12 +1,12 @@
 # include "Jacobi_function.h"
 
-mat Jacobi(mat A, int N){
+mat Jacobi(mat A, int N, int *v){
     // Here the Jacobi method will be implemented. A call to this function will solve
     // an eigenvalue problem by Jacobi's method.
     double maximum = 1;
     double tolerance = 1e-4;
-    int n = 0; int maxn = 2e5;
-
+    int maxn = 2e5;
+    int n = *v;
 
     while (maximum > tolerance && n < maxn){
 
@@ -50,7 +50,7 @@ mat Jacobi(mat A, int N){
         A(k,l) = 0.0; A(l,k) = 0;
 
         // Looping over the rest of the matrix, and rotating the whole matrix.
-        for (i=0; i<n; i++){
+        for (i=0; i<N; i++){
             if (i != k && i != l){
                 a_ik = A(i,k);
                 a_il = A(i,l);
@@ -67,6 +67,7 @@ mat Jacobi(mat A, int N){
     if (n == maxn){
         cout << "Jacobi did not converge fast enough. While-loop interrupted by too large n" << endl;
     }
+    *v = n;
     return A;
 } // End of Jacobi function
 
