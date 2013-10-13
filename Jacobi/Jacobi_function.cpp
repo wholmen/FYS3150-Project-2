@@ -5,7 +5,7 @@ mat Jacobi(mat A, int N, int *v){
     // an eigenvalue problem by Jacobi's method.
     double maximum = 1;
     double tolerance = 1e-4;
-    int maxn = 2e5;
+    int maxn = 1e15;
     int n = *v;
 
     while (maximum > tolerance && n < maxn){
@@ -70,10 +70,3 @@ mat Jacobi(mat A, int N, int *v){
     *v = n;
     return A;
 } // End of Jacobi function
-
-/*
-void Analytical(mat A, int N){
-    // This is a function made to compute a closed form solution of the same physical problem.
-
-}
-*/
